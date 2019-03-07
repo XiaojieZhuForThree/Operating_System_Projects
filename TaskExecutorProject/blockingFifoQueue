@@ -1,0 +1,49 @@
+package edu.utdallas.blockingFIFO;
+
+import edu.utdallas.taskExecutor.Task;
+
+public class blockingFifoQueue {
+	int N = 100;
+	Task[] buffer;
+	int nextin, nextout;
+	int count;
+	Object notfull, notempty; // Monitors used for synchronization
+
+	public void put(Task task) 
+	{
+	  if(count == N)
+		try {
+			notfull.wait();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}   // Buffer is full, wait for take
+
+	  synchronized(this) {
+	    buffer[nextin] = task;
+	    nextin = (nextin + 1) % N;
+	    count++;
+	    notempty.notify(); // Signal waiting take threads
+	  }
+	}
+
+	Task take() 
+	{
+	  if(count == 0)
+		try {
+			notempty.wait();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} // Buffer is empty, wait for put
+
+	  synchronized(this) {
+	    Task result = buffer[nextout];
+	    nextout = (nextout + 1) % N;
+	    count--;
+	    notfull.notify(); // Signal waiting put threads
+	    return result;
+	  }
+	}
+
+}

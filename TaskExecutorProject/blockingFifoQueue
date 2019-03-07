@@ -3,21 +3,26 @@ package edu.utdallas.blockingFIFO;
 import edu.utdallas.taskExecutor.Task;
 
 public class blockingFifoQueue {
-	int N = 100;
+	int N;
 	Task[] buffer;
 	int nextin, nextout;
 	int count;
 	Object notfull, notempty; // Monitors used for synchronization
-
-	public void put(Task task) 
+	public blockingFifoQueue(int n) {
+		this.N = n;
+		buffer = new Task[N];
+		nextin = 0; nextout = 0;
+		count = 0;
+	}
+	public blockingFifoQueue() {
+		this.N = 10;
+		buffer = new Task[N];
+		nextin = 0; nextout = 0;
+		count = 0;
+	}
+	public void put(Task task) throws InterruptedException 
 	{
-	  if(count == N)
-		try {
-			notfull.wait();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}   // Buffer is full, wait for take
+	  if(count == N) notfull.wait();   // Buffer is full, wait for take
 
 	  synchronized(this) {
 	    buffer[nextin] = task;
@@ -27,15 +32,9 @@ public class blockingFifoQueue {
 	  }
 	}
 
-	Task take() 
+	Task take() throws InterruptedException 
 	{
-	  if(count == 0)
-		try {
-			notempty.wait();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} // Buffer is empty, wait for put
+	  if(count == 0) notempty.wait(); // Buffer is empty, wait for put
 
 	  synchronized(this) {
 	    Task result = buffer[nextout];

@@ -1,0 +1,40 @@
+package edu.utdallas.taskExecutorImpl;
+
+import edu.utdallas.blockingFIFO.blockingFifoQueue;
+import edu.utdallas.taskExecutor.Task;
+import edu.utdallas.taskExecutor.TaskExecutor;
+
+class Tasks implements Task{
+
+	@Override
+	public void execute() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public String getName() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+}
+
+
+public class TaskExecutorImpl implements TaskExecutor
+{
+	blockingFifoQueue bfq;
+	public TaskExecutorImpl(int n) {
+		bfq = new blockingFifoQueue();
+	}
+	@Override
+	public void addTask(Task task)
+	{
+		while (true) {
+			
+			bfq.put(task);
+		}
+		// TODO Complete the implementation
+	}
+
+}

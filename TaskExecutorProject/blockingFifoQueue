@@ -1,19 +1,20 @@
 package edu.utdallas.taskExecutorImpl;
+
 import edu.utdallas.blockingFIFO.blockingFifoQueue;
 import edu.utdallas.taskExecutor.Task;
 import edu.utdallas.taskExecutor.TaskExecutor;
 
-public class TaskExecutorImpl implements TaskExecutor
-{
+public class TaskExecutorImpl implements TaskExecutor {
 	blockingFifoQueue bfq;
+
 	public TaskExecutorImpl(int n) {
 		bfq = new blockingFifoQueue(100);
 	}
+
 	@Override
-	public void addTask(Task task)
-	{
+	public void addTask(Task task) {
 		while (true) {
-			
+
 			try {
 				bfq.put(task);
 			} catch (InterruptedException e) {
@@ -23,28 +24,26 @@ public class TaskExecutorImpl implements TaskExecutor
 		}
 		// TODO Complete the implementation
 	}
-	
+
 	public void runTask() {
 		Runnable running = new Runnable() {
-			public void run()
-			{
-			    while(true) {
-			        // take() blocks if queue is empty
-			        Task newTask = bfq.take();
-			        try {
-			            newTask.execute();
-			        }
-			        catch(Throwable th) {
-			           // Log (e.g. print exception’s message to console) 
-			           // and drop any exceptions thrown by the task’s
-			           // execution.
-			        }
-			    }
+			public void run() {
+				while (true) {
+					// take() blocks if queue is empty
+					Task newTask = bfq.take();
+					try {
+						newTask.execute();
+					} catch (Throwable th) {
+						// Log (e.g. print exception’s message to console)
+						// and drop any exceptions thrown by the task’s
+						// execution.
+					}
+				}
 
 			}
 		};
-		
-		Thread insertThread = new Thread(running);
+		Thread runThread = new Thread(running);
+		runThread.start();
 	}
 
 }

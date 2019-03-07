@@ -14,36 +14,20 @@ public class TaskExecutorImpl implements TaskExecutor {
 	@Override
 	public void addTask(Task task) {
 		while (true) {
-
-			try {
-				bfq.put(task);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		// TODO Complete the implementation
-	}
-
-	public void runTask() {
-		Runnable running = new Runnable() {
-			public void run() {
-				while (true) {
-					// take() blocks if queue is empty
-					Task newTask = bfq.take();
-					try {
+			bfq.put(task);
+			Runnable running = new Runnable() {
+				public void run() {
+					while (true) {
+						// take() blocks if queue is empty
+						Task newTask = bfq.take();
 						newTask.execute();
-					} catch (Throwable th) {
-						// Log (e.g. print exception’s message to console)
-						// and drop any exceptions thrown by the task’s
-						// execution.
 					}
-				}
 
-			}
-		};
-		Thread runThread = new Thread(running);
-		runThread.start();
+				}
+			};
+			Thread runThread = new Thread(running);
+			runThread.start();
+		}
 	}
 
 }

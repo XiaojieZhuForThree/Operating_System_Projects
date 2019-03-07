@@ -14,13 +14,25 @@ public class TaskExecutorImpl implements TaskExecutor {
 	@Override
 	public void addTask(Task task) {
 		while (true) {
-			bfq.put(task);
+			try {
+				bfq.put(task);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			Runnable running = new Runnable() {
 				public void run() {
 					while (true) {
 						// take() blocks if queue is empty
-						Task newTask = bfq.take();
-						newTask.execute();
+						Task newTask;
+						try {
+							newTask = bfq.take();
+							newTask.execute();
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						
 					}
 
 				}

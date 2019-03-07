@@ -4,20 +4,30 @@ import edu.utdallas.blockingFIFO.blockingFifoQueue;
 import edu.utdallas.taskExecutor.Task;
 import edu.utdallas.taskExecutor.TaskExecutor;
 
-public class TaskExecutorImpl implements TaskExecutor
-{
+public class TaskExecutorImpl implements TaskExecutor {
 	blockingFifoQueue bfq;
+
 	public TaskExecutorImpl(int n) {
-		bfq = new blockingFifoQueue();
+		bfq = new blockingFifoQueue(100);
 	}
+
 	@Override
-	public void addTask(Task task)
-	{
+	public void addTask(Task task) {
 		while (true) {
-			
 			bfq.put(task);
+			Runnable running = new Runnable() {
+				public void run() {
+					while (true) {
+						// take() blocks if queue is empty
+						Task newTask = bfq.take();
+						newTask.execute();
+					}
+
+				}
+			};
+			Thread runThread = new Thread(running);
+			runThread.start();
 		}
-		// TODO Complete the implementation
 	}
 
 }

@@ -25,7 +25,7 @@ public class TaskExecutorImpl implements TaskExecutor
 	}
 	
 	public void runTask() {
-		Runnable inserter = new Runnable() {
+		Runnable running = new Runnable() {
 			public void run()
 			{
 			    while(true) {
@@ -44,7 +44,7 @@ public class TaskExecutorImpl implements TaskExecutor
 			}
 		};
 		
-		Thread insertThread = new Thread(inserter);
+		Thread insertThread = new Thread(running);
 	}
 
 }

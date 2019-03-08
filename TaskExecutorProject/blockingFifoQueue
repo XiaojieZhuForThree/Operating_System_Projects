@@ -1,6 +1,9 @@
 package edu.utdallas.blockingFIFO;
 
+import java.util.List;
+
 import edu.utdallas.taskExecutor.Task;
+import edu.utdallas.taskExecutorImpl.TaskExecutorImpl;
 
 public class blockingFifoQueue {
 	int N;
@@ -8,42 +11,48 @@ public class blockingFifoQueue {
 	int nextin, nextout;
 	int count;
 	Object notfull, notempty; // Monitors used for synchronization
-	
-	public blockingFifoQueue(int n) {
-		this.N = n;
+
+	public blockingFifoQueue(int n, TaskExecutorImpl notfull, List<Thread> notempty) {
+		N = n;
 		buffer = new Task[N];
-		nextin = 0; nextout = 0;
+		nextin = 0;
+		nextout = 0;
 		count = 0;
-	}
-	
-	public blockingFifoQueue() {
-		this.N = 10;
-		buffer = new Task[N];
-		nextin = 0; nextout = 0;
-		count = 0;
-	}
-	public void put(Task task) throws InterruptedException 
-	{
-	  if(count == N) notfull.wait();   // Buffer is full, wait for take
-
-	  synchronized(this) {
-	    buffer[nextin] = task;
-	    nextin = (nextin + 1) % N;
-	    count++;
-	    notempty.notify(); // Signal waiting take threads
-	  }
+		this.notfull = notfull;
+		this.notempty = notempty;
 	}
 
-	public Task take() throws InterruptedException 
-	{
-	  if(count == 0) notempty.wait(); // Buffer is empty, wait for put
+	public void put(Task task) throws Exception {
+		if (count == N)
+			synchronized (notfull) {
+				notfull.wait();
+			} // Buffer is full, wait for take
 
-	  synchronized(this) {
-	    Task result = buffer[nextout];
-	    nextout = (nextout + 1) % N;
-	    count--;
-	    notfull.notify(); // Signal waiting put threads
-	    return result;
-	  }
+		synchronized (this) {
+			buffer[nextin] = task;
+			nextin = (nextin + 1) % N;
+			count++;
+			synchronized (notempty) {
+				notempty.notify();
+			}
+			// Signal waiting take threads
+		}
+	}
+
+	public Task take() throws Exception {
+		if (count == 0)
+			synchronized (notempty) {
+				notempty.wait();
+			} // Buffer is empty, wait for put
+
+		synchronized (this) {
+			Task result = buffer[nextout];
+			nextout = (nextout + 1) % N;
+			count--;
+			synchronized (notfull) {
+				notfull.notify();
+			}
+			return result;
+		}
 	}
 }

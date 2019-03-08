@@ -11,40 +11,33 @@ public class TaskExecutorImpl implements TaskExecutor {
 	List<Thread> ThreadPool;
 	Runnable running = new Runnable() {
 		public void run() {
-			while (true) {
-				// take() blocks if queue is empty
-				Task newTask;
-				try {
-					newTask = bfq.take();
-					newTask.execute();
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+			try {
+				Task newTask = bfq.take();
+				newTask.execute();
+			} catch (Exception e) {
 
 			}
 		}
 	};
 
 	public TaskExecutorImpl(int n) {
-		bfq = new blockingFifoQueue(100);
 		ThreadPool = new ArrayList<>();
+		for (int i = 0; i < 10; i++) {
+			ThreadPool.add(new Thread(running));
+		}
+		bfq = new blockingFifoQueue(100, this, ThreadPool);
 	}
 
-	@Override
 	public void addTask(Task task) {
-
-		while (true) {
-			Thread runThread = new Thread(running);
-			ThreadPool.add(runThread);
-			try {
-				bfq.put(task);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+		try {
+			bfq.put(task);
+		} catch (Exception e) {
 
 		}
+		if (!ThreadPool.isEmpty()) {
+			Thread runThread = ThreadPool.remove(0);
+			runThread.start();
+//			ThreadPool.add(runThread);
+		}
 	}
-
 }

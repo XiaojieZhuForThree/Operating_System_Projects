@@ -9,6 +9,9 @@ import edu.utdallas.taskExecutor.TaskExecutor;
 public class TaskExecutorImpl implements TaskExecutor {
 	blockingFifoQueue bfq;
 	List<Thread> ThreadPool;
+	Task task;
+	Thread addThread;
+	Thread runThread;
 	Runnable running = new Runnable() {
 		public void run() {
 			try {
@@ -19,25 +22,38 @@ public class TaskExecutorImpl implements TaskExecutor {
 			}
 		}
 	};
+	Runnable adding = new Runnable() {
+		public void run() {
+			try {
+				bfq.put(task);
+			} catch (Exception e) {
 
+			}
+		}
+	};
 	public TaskExecutorImpl(int n) {
 		ThreadPool = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
 			ThreadPool.add(new Thread(running));
 		}
-		bfq = new blockingFifoQueue(100, this, ThreadPool);
+		addThread = new Thread(adding);
+		runThread = new Thread(running);
+		bfq = new blockingFifoQueue(100, addThread, runThread);
+		
 	}
 
 	public void addTask(Task task) {
+		this.task = task;
 		try {
-			bfq.put(task);
+			adding.run();
 		} catch (Exception e) {
-
+			System.out.println(e);
 		}
-		if (!ThreadPool.isEmpty()) {
-			Thread runThread = ThreadPool.remove(0);
+		try {
 			runThread.start();
-//			ThreadPool.add(runThread);
+		} catch (Exception e) {
+			System.out.println(e);
 		}
+
 	}
 }

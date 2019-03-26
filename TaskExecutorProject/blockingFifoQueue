@@ -1,38 +1,56 @@
-package edu.utdallas.taskExecutor.studentTest;
+package edu.utdallas.blockingFIFO;
+
+import java.util.List;
 
 import edu.utdallas.taskExecutor.Task;
-import edu.utdallas.taskExecutorImpl.TaskExecutorImpl;
 
-public class TaskExecutorSimpleTest
-{
-    public void runTest()
-	{
-		// Initialize the executor with 10 threads & a queue size of 100. 
-		final TaskExecutorImpl taskExecutor = new TaskExecutorImpl(10);
+public class blockingFifoQueue {
+	int N;
+	Task[] buffer;
+	int nextin, nextout;
+	int count;
+	Object notfull, notempty; // Monitors used for synchronization
 
-		// Inject 1000 tasks into the executor in a separate thread. 
-		Runnable inserter = new Runnable() {
-			public void run()
-			{
-				for (int idx = 0; idx < 1000; idx++) {
-					// Note that Threads are assigned names. 
-					String name = "SimpleTask" + idx;
-					Task myTask = new SimpleTestTask(name);
-					System.out.println("******  Adding Task " + myTask.getName());
-					taskExecutor.addTask(myTask);
-					Thread.yield();
-				}
+	public blockingFifoQueue(int n, Thread addThread, List<Thread> ThreadPool) {
+		N = n;
+		buffer = new Task[N];
+		nextin = 0;
+		nextout = 0;
+		count = 0;
+		notfull = addThread;
+		notempty = ThreadPool;
+	}
+
+	public void put(Task task) throws Exception {
+		if (count == N) {
+			synchronized (notfull) {
+				notfull.wait();
 			}
-		};
-		
-		Thread insertThread = new Thread(inserter);
-		insertThread.start();
+
+		}
+		synchronized (this) {
+
+			buffer[nextin] = task;
+			nextin = (nextin + 1) % N;
+			count++;
+			notempty.notify();
+		}
 	}
 
-	public static void main(String args[])
-	{
-		TaskExecutorSimpleTest app = new TaskExecutorSimpleTest();
-		app.runTest();
-	}
+	public Task take() throws Exception {
+		if (count == 0)
+			synchronized (notempty) {
+				notempty.wait();
+			}
 
+		synchronized (this) {
+			Task result = buffer[nextout];
+			nextout = (nextout + 1) % N;
+			count--;
+			synchronized (notfull) {
+				notfull.notify();
+			}
+			return result;
+		}
+	}
 }

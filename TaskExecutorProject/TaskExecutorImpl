@@ -11,15 +11,25 @@ public class TaskExecutorImpl implements TaskExecutor {
 	List<Thread> ThreadPool;
 	Task task;
 	Thread addThread;
-	Thread runThread;
 	Runnable running = new Runnable() {
 		public void run() {
-			try {
-				Task newTask = bfq.take();
-				newTask.execute();
-			} catch (Exception e) {
-
+			while (true) {
+				try {
+					Task newTask = bfq.take();
+					newTask.execute();
+				} catch (Exception e) {
+					
+				}
+				Thread.yield();
 			}
+//			try {
+//				while (true) {
+//					Task newTask = bfq.take();
+//					newTask.execute();
+//				}
+//			} catch (Exception e) {
+//
+//			}
 		}
 	};
 	Runnable adding = new Runnable() {
@@ -31,29 +41,37 @@ public class TaskExecutorImpl implements TaskExecutor {
 			}
 		}
 	};
+
 	public TaskExecutorImpl(int n) {
 		ThreadPool = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
 			ThreadPool.add(new Thread(running));
 		}
 		addThread = new Thread(adding);
-		runThread = new Thread(running);
-		bfq = new blockingFifoQueue(100, addThread, runThread);
-		
+		bfq = new blockingFifoQueue(100, addThread, ThreadPool);
+		while (true) {
+			try {
+				Thread runThread = ThreadPool.remove(0);
+				runThread.run();
+			} catch (Exception e) {
+				
+			}
+		}
+//		try {
+//			while (true) {
+//				Thread runThread = ThreadPool.remove(0);
+//				runThread.start();
+//
+//			}
+//
+//		} catch (Exception e) {
+//			
+//		}
+//		Thread.yield();
 	}
 
 	public void addTask(Task task) {
 		this.task = task;
-		try {
-			adding.run();
-		} catch (Exception e) {
-			System.out.println(e);
-		}
-		try {
-			runThread.start();
-		} catch (Exception e) {
-			System.out.println(e);
-		}
-
+		addThread.run();		
 	}
 }
